@@ -1,0 +1,29 @@
+import { DomainError } from "./errors";
+import type { LeaveApplication, Role, Status, User } from "./types";
+
+/**
+ * Stand-in for Flowable. Services ask for a transition; only this module
+ * changes `status`, and only along the paths in this table.
+ */
+type Transition = { from: Status[]; to: Status; roles: Role[] };
+
+const TRANSITIONS = {
+  SUBMIT: { from: ["DRAFT", "RETURNED"], to: "SUBMITTED", roles: ["EMPLOYEE"] },
+} satisfies Record<string, Transition>;
+
+export type WorkflowAction = keyof typeof TRANSITIONS;
+
+export function fire(application: LeaveApplication, action: WorkflowAction, actor: User) {
+  const transition: Transition = TRANSITIONS[action];
+  if (!transition.roles.includes(actor.role)) {
+    throw new DomainError("Your role cannot take this action.");
+  }
+  if (!transition.from.includes(application.status)) {
+    throw new DomainError("This application has moved on since you opened it. Reload the page to see its current status.");
+  }
+
+  const now = new Date().toISOString();
+  application.status = transition.to;
+  application.updatedAt = now;
+  if (action === "SUBMIT") application.submittedAt = now;
+}

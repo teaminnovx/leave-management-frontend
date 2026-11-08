@@ -120,6 +120,35 @@ body {
     margin-bottom: 0.2rem;
   }
 
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-sheet);
+  }
+
+  .ledger th {
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-file);
+    padding: 0.5rem 0.75rem;
+  }
+
+  .ledger td {
+    border-bottom: 1px solid var(--color-line);
+    padding: 0.55rem 0.75rem;
+    vertical-align: top;
+  }
+
+  .detail-list {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 9rem) 1fr;
+    gap: 0.6rem 1rem;
+  }
+
+  .detail-list dt {
+    font-weight: 600;
+  }
+
   .field-error {
     color: var(--color-tape);
     font-size: 0.9rem;

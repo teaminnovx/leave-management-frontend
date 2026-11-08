@@ -16,5 +16,5 @@ export function createSeed(): Database {
   const balances: Balance[] = USERS.filter((user) => user.role === "EMPLOYEE").flatMap((user) =>
     LEAVE_TYPES.map((type) => ({ userId: user.id, type, entitled: ENTITLEMENT[type], used: 0 })),
   );
-  return { users: USERS, balances };
+  return { users: USERS, balances, applications: [] };
 }

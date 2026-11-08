@@ -31,7 +31,43 @@ export type Balance = {
   used: number;
 };
 
+export const STATUSES = ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "RETURNED", "APPROVED", "REJECTED"] as const;
+export type Status = (typeof STATUSES)[number];
+
+export const STATUS_LABELS: Record<Status, string> = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  UNDER_REVIEW: "Under review",
+  RETURNED: "Returned",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export type Attachment = {
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+};
+
+export type LeaveApplication = {
+  id: string;
+  ref: string;
+  employeeId: string;
+  type: LeaveType;
+  startDate: string | null;
+  endDate: string | null;
+  days: number;
+  reason: string;
+  attachment: Attachment | null;
+  status: Status;
+  createdAt: string;
+  updatedAt: string;
+  submittedAt: string | null;
+};
+
 export type Database = {
   users: User[];
   balances: Balance[];
+  applications: LeaveApplication[];
 };
