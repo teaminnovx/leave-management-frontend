@@ -39,7 +39,7 @@ export function getReviewQueue(actor: User) {
 }
 
 export function startReview(actor: User, id: string) {
-  transaction((db) => fire(findReviewable(db, actor, id), "START_REVIEW", actor));
+  transaction((db) => fire(db, findReviewable(db, actor, id), "START_REVIEW", actor));
 }
 
 export function decide(actor: User, id: string, input: { decision: unknown; comment: unknown }) {
@@ -54,7 +54,7 @@ export function decide(actor: User, id: string, input: { decision: unknown; comm
   transaction((db) => {
     const application = findReviewable(db, actor, id);
     if (decision === "APPROVE" && application.status === "UNDER_REVIEW") deductBalance(db, application);
-    fire(application, decision, actor);
+    fire(db, application, decision, actor, comment || null);
     application.reviewerId = actor.id;
     application.reviewComment = comment || null;
   });

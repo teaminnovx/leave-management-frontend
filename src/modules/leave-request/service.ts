@@ -5,6 +5,7 @@ import { transaction } from "@/lib/db";
 import { DomainError, ValidationError } from "@/lib/errors";
 import { LEAVE_TYPE_LABELS, type Attachment, type Database, type LeaveApplication, type LeaveType, type Status, type User } from "@/lib/types";
 import { fire } from "@/lib/workflow";
+import { recordTransition } from "@/modules/leave-tracking/events";
 import { draftSchema, submitSchema } from "./schema";
 import { deleteAttachment, storeAttachment } from "./storage";
 
@@ -74,6 +75,7 @@ function createApplication(db: Database, actor: User, type: LeaveType): LeaveApp
     decidedAt: null,
   };
   db.applications.push(application);
+  recordTransition(db, { application, action: "CREATE", actor, from: null, comment: null });
   return application;
 }
 
@@ -108,7 +110,7 @@ export async function saveApplication(actor: User, command: SaveCommand): Promis
 
       if (command.intent === "submit") {
         assertSubmittable(db, application);
-        fire(application, "SUBMIT", actor);
+        fire(db, application, "SUBMIT", actor);
       }
       return application.id;
     });

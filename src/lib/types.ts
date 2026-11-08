@@ -69,8 +69,30 @@ export type LeaveApplication = {
   decidedAt: string | null;
 };
 
+export type AuditEntry = {
+  id: string;
+  applicationId: string;
+  actorId: string;
+  action: string;
+  from: Status | null;
+  to: Status;
+  comment: string | null;
+  at: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  applicationId: string;
+  message: string;
+  read: boolean;
+  at: string;
+};
+
 export type Database = {
   users: User[];
   balances: Balance[];
   applications: LeaveApplication[];
+  audit: AuditEntry[];
+  notifications: Notification[];
 };

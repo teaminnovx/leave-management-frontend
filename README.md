@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 and choose a person to sign in as. Data is kept in `data/db.json`, and `npm run db:reset` clears it.
+Open http://localhost:3000 and choose a person to sign in as. Data is kept in `data/db.json`, and `npm run db:reset` restores the sample data. Run the reset when switching between branches.
 
 ## Branches
 

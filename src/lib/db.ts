@@ -23,7 +23,7 @@ function load(): Database {
     persist(seed);
     return seed;
   }
-  return { ...createSeed(), ...JSON.parse(fs.readFileSync(DB_FILE, "utf8")) };
+  return { audit: [], notifications: [], ...JSON.parse(fs.readFileSync(DB_FILE, "utf8")) };
 }
 
 export function read<T>(query: (db: Readonly<Database>) => T): T {

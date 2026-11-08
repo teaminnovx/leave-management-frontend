@@ -4,7 +4,7 @@ import { RouteSlip } from "@/components/route-slip";
 import { StatusBadge } from "@/components/status-badge";
 import { canView, supervises } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
-import { formatDate } from "@/lib/dates";
+import { formatDate, formatDateTime } from "@/lib/dates";
 import { read } from "@/lib/db";
 import { LEAVE_TYPE_LABELS } from "@/lib/types";
 import { EDITABLE_STATUSES } from "@/modules/leave-request/service";
@@ -21,11 +21,14 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
       employee: db.users.find((entry) => entry.id === application.employeeId),
       reviewer: db.users.find((entry) => entry.id === application.reviewerId),
       canReview: user.role === "SUPERVISOR" && supervises(db, user, application.employeeId),
+      history: db.audit
+        .filter((entry) => entry.applicationId === application.id)
+        .map((entry) => ({ ...entry, actorName: db.users.find((person) => person.id === entry.actorId)?.name ?? "Unknown" })),
     };
   });
   if (!data) notFound();
 
-  const { application, employee, reviewer, canReview } = data;
+  const { application, employee, reviewer, canReview, history } = data;
   const editable = application.employeeId === user.id && EDITABLE_STATUSES.includes(application.status);
 
   return (
@@ -78,6 +81,21 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
 
       {canReview && application.status === "SUBMITTED" && <StartReviewButton applicationId={application.id} />}
       {canReview && application.status === "UNDER_REVIEW" && <DecisionPanel key={application.updatedAt} applicationId={application.id} />}
+
+      <section className="mt-10 max-w-2xl">
+        <h2 className="section-title">History</h2>
+        <ol className="mt-3 border-l-[3px] border-tape pl-4">
+          {history.map((entry) => (
+            <li key={entry.id} className="pb-4 last:pb-0">
+              <p>
+                <span className="font-semibold">{entry.action}</span> by {entry.actorName}
+              </p>
+              <p className="text-sm text-muted">{formatDateTime(entry.at)}</p>
+              {entry.comment && <p className="mt-1 whitespace-pre-wrap">{entry.comment}</p>}
+            </li>
+          ))}
+        </ol>
+      </section>
     </>
   );
 }

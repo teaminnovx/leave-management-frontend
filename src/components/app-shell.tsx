@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
+import { read } from "@/lib/db";
 import { NAV } from "@/lib/nav";
 import { signOut } from "@/lib/session-actions";
 import { ROLE_LABELS } from "@/lib/types";
 
 export async function AppShell({ children }: { children: ReactNode }) {
   const user = await requireUser();
+  const unread = read((db) => db.notifications.filter((entry) => entry.userId === user.id && !entry.read).length);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -20,6 +22,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
               {item.label}
             </Link>
           ))}
+          <Link href="/notifications" className="spine-link">
+            Notifications
+            {unread > 0 && <span className="ml-2 rounded-full bg-tape px-2 text-sm font-semibold">{unread}</span>}
+          </Link>
         </nav>
         <div className="md:mt-auto">
           <p className="font-semibold leading-snug">{user.name}</p>

@@ -1,9 +1,11 @@
 import { DomainError } from "./errors";
-import type { LeaveApplication, Role, Status, User } from "./types";
+import { recordTransition } from "@/modules/leave-tracking/events";
+import type { Database, LeaveApplication, Role, Status, User } from "./types";
 
 /**
  * Stand-in for Flowable. Services ask for a transition; only this module
- * changes `status`, and only along the paths in this table.
+ * changes `status`, and only along the paths in this table. That single
+ * path is also why no status change can miss its audit entry or notification.
  */
 type Transition = { from: Status[]; to: Status; roles: Role[] };
 
@@ -17,7 +19,7 @@ const TRANSITIONS = {
 
 export type WorkflowAction = keyof typeof TRANSITIONS;
 
-export function fire(application: LeaveApplication, action: WorkflowAction, actor: User) {
+export function fire(db: Database, application: LeaveApplication, action: WorkflowAction, actor: User, comment: string | null = null) {
   const transition: Transition = TRANSITIONS[action];
   if (!transition.roles.includes(actor.role)) {
     throw new DomainError("Your role cannot take this action.");
@@ -27,9 +29,11 @@ export function fire(application: LeaveApplication, action: WorkflowAction, acto
   }
 
   const now = new Date().toISOString();
+  const from = application.status;
   application.status = transition.to;
   application.updatedAt = now;
   if (action === "SUBMIT") application.submittedAt = now;
   if (action === "START_REVIEW") application.reviewerId = actor.id;
   if (action === "APPROVE" || action === "REJECT") application.decidedAt = now;
+  recordTransition(db, { application, action, actor, from, comment });
 }
