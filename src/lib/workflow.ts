@@ -9,6 +9,10 @@ type Transition = { from: Status[]; to: Status; roles: Role[] };
 
 const TRANSITIONS = {
   SUBMIT: { from: ["DRAFT", "RETURNED"], to: "SUBMITTED", roles: ["EMPLOYEE"] },
+  START_REVIEW: { from: ["SUBMITTED"], to: "UNDER_REVIEW", roles: ["SUPERVISOR"] },
+  APPROVE: { from: ["UNDER_REVIEW"], to: "APPROVED", roles: ["SUPERVISOR"] },
+  REJECT: { from: ["UNDER_REVIEW"], to: "REJECTED", roles: ["SUPERVISOR"] },
+  RETURN: { from: ["UNDER_REVIEW"], to: "RETURNED", roles: ["SUPERVISOR"] },
 } satisfies Record<string, Transition>;
 
 export type WorkflowAction = keyof typeof TRANSITIONS;
@@ -26,4 +30,6 @@ export function fire(application: LeaveApplication, action: WorkflowAction, acto
   application.status = transition.to;
   application.updatedAt = now;
   if (action === "SUBMIT") application.submittedAt = now;
+  if (action === "START_REVIEW") application.reviewerId = actor.id;
+  if (action === "APPROVE" || action === "REJECT") application.decidedAt = now;
 }

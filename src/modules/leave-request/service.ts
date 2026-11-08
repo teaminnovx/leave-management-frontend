@@ -69,6 +69,9 @@ function createApplication(db: Database, actor: User, type: LeaveType): LeaveApp
     createdAt: now,
     updatedAt: now,
     submittedAt: null,
+    reviewerId: null,
+    reviewComment: null,
+    decidedAt: null,
   };
   db.applications.push(application);
   return application;

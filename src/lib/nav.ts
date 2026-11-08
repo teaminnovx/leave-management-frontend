@@ -7,6 +7,6 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/applications", label: "My applications" },
     { href: "/applications/new", label: "Apply for leave" },
   ],
-  SUPERVISOR: [],
+  SUPERVISOR: [{ href: "/review", label: "Review queue" }],
   HR_ADMIN: [],
 };

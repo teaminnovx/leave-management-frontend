@@ -21,6 +21,12 @@ export default async function EditApplicationPage({ params }: { params: Promise<
   return (
     <>
       <h1 className="page-title mb-6">Edit {data.application.ref}</h1>
+      {data.application.status === "RETURNED" && data.application.reviewComment && (
+        <section className="mb-6 max-w-xl border-l-4 border-tape bg-sheet px-4 py-3">
+          <h2 className="font-semibold">Changes requested</h2>
+          <p className="mt-1 whitespace-pre-wrap">{data.application.reviewComment}</p>
+        </section>
+      )}
       <LeaveForm key={data.application.updatedAt} application={data.application} available={data.available} today={today()} />
     </>
   );

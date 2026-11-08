@@ -64,6 +64,9 @@ export type LeaveApplication = {
   createdAt: string;
   updatedAt: string;
   submittedAt: string | null;
+  reviewerId: string | null;
+  reviewComment: string | null;
+  decidedAt: string | null;
 };
 
 export type Database = {
