@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Leave Register
 
-## Getting Started
+A small Leave Management System used as the reference example on day 1 of the workshop. Each module mirrors a pattern from iDCMS.
 
-First, run the development server:
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 and choose a person to sign in as. Data is kept in `data/db.json`, and `npm run db:reset` clears it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Branches
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Each branch builds on the one before it, so they can be walked through in order.
 
-## Learn More
+| Branch | Adds |
+| --- | --- |
+| `01-setup` | Design tokens, JSON repository, role sign-in, app shell |
+| `02-leave-request` | Application form, upload, validation, draft and submit |
+| `03-leave-review` | Review queue, decisions, return-and-resubmit loop |
+| `04-leave-tracking` | HR dashboard, escalation, balances, archive, notifications, audit log |
 
-To learn more about Next.js, take a look at the following resources:
+## Workshop stand-ins
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Here | In the Spring Boot stack |
+| --- | --- |
+| Sign-in cookie and `requireRole` | Keycloak |
+| `src/lib/workflow.ts` | Flowable |
+| Zod schemas | DTO + Bean Validation |
+| Server action, service, `src/lib/db.ts` | Controller, Service, Repository |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The sign-in has no password. It exists for the demo and must not be deployed as real authentication.
