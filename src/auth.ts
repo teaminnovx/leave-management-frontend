@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import NextAuth from "next-auth";
+import { getToken, type JWT } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
 import { transaction } from "@/lib/db";
 import { ROLES, type Role } from "@/lib/types";
@@ -14,6 +16,11 @@ declare module "@auth/core/jwt" {
   interface JWT {
     userId?: string;
     idToken?: string;
+    accessToken?: string;
+    refreshToken?: string;
+    /** Seconds since epoch. */
+    expiresAt?: number;
+    error?: "RefreshFailed";
   }
 }
 
@@ -57,11 +64,64 @@ function upsertUser(profile: KeycloakProfile, role: Role): string {
   return id;
 }
 
+/** Builds the realm issuer, e.g. https://alpha-idp.oss.net.bd/realms/Leave-MGMT-Test. */
+export function keycloakIssuer() {
+  const url = (process.env.KEYCLOAK_URL ?? "").replace(/\/+$/, "");
+  const realm = encodeURIComponent(process.env.KEYCLOAK_REALM ?? "");
+  return `${url}/realms/${realm}`;
+}
+
+/** Keycloak access tokens are short-lived (5 minutes by default), so swap the refresh token for a new one. */
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  if (!token.refreshToken) return { ...token, error: "RefreshFailed" };
+  try {
+    const response = await fetch(`${keycloakIssuer()}/protocol/openid-connect/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: process.env.AUTH_KEYCLOAK_ID ?? "",
+        refresh_token: token.refreshToken,
+      }),
+    });
+    const tokens = await response.json();
+    if (!response.ok) throw new Error(tokens.error_description ?? tokens.error);
+    return {
+      ...token,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token ?? token.refreshToken,
+      idToken: tokens.id_token ?? token.idToken,
+      expiresAt: Math.floor(Date.now() / 1000) + tokens.expires_in,
+      error: undefined,
+    };
+  } catch {
+    return { ...token, error: "RefreshFailed" };
+  }
+}
+
+/**
+ * The Keycloak access token for the signed-in user, refreshed if needed.
+ * Server-only: it is read from the encrypted session cookie and never sent to the browser.
+ */
+export async function getAccessToken(): Promise<string | null> {
+  const requestHeaders = await headers();
+  const token = await getToken({
+    req: { headers: requestHeaders },
+    secret: process.env.AUTH_SECRET,
+    // Auth.js prefixes the cookie with __Secure- only when served over https.
+    secureCookie: (requestHeaders.get("cookie") ?? "").includes("__Secure-authjs.session-token"),
+  });
+  if (!token?.accessToken) return null;
+  if (token.expiresAt && Date.now() / 1000 < token.expiresAt - 30) return token.accessToken;
+  const refreshed = await refreshAccessToken(token);
+  return refreshed.error ? null : (refreshed.accessToken ?? null);
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Keycloak({
       clientId: process.env.AUTH_KEYCLOAK_ID,
-      issuer: process.env.AUTH_KEYCLOAK_ISSUER,
+      issuer: keycloakIssuer(),
       // leave-mgmt-public is a public client: no secret, PKCE protects the code exchange.
       clientSecret: undefined,
       client: { token_endpoint_auth_method: "none" },
@@ -74,12 +134,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     authorized({ auth }) {
       return Boolean(auth?.user);
     },
-    jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }) {
       if (account && profile) {
         token.userId = upsertUser(profile as KeycloakProfile, roleFrom(realmRoles(account.access_token)));
         token.idToken = account.id_token;
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at;
+        return token;
       }
-      return token;
+      if (!token.expiresAt || Date.now() / 1000 < token.expiresAt - 30) return token;
+      return refreshAccessToken(token);
     },
     session({ session, token }) {
       if (token.userId) session.user.id = token.userId;

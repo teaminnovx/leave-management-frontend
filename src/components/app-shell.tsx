@@ -26,6 +26,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
             Notifications
             {unread > 0 && <span className="ml-2 rounded-full bg-tape px-2 text-sm font-semibold">{unread}</span>}
           </Link>
+          <Link href="/api-check" className="spine-link">
+            API check
+          </Link>
         </nav>
         <div className="md:mt-auto">
           <p className="font-semibold leading-snug">{user.name}</p>

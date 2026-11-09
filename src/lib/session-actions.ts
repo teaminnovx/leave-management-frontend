@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth, signIn, signOut } from "@/auth";
+import { auth, keycloakIssuer, signIn, signOut } from "@/auth";
 
 /** Only same-site paths, so the login page cannot be used as an open redirect. */
 function safePath(value: FormDataEntryValue | null) {
@@ -21,7 +21,7 @@ export async function signOutEverywhere() {
 
   const host = (await headers()).get("host");
   const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const logout = new URL(`${process.env.AUTH_KEYCLOAK_ISSUER}/protocol/openid-connect/logout`);
+  const logout = new URL(`${keycloakIssuer()}/protocol/openid-connect/logout`);
   logout.searchParams.set("client_id", process.env.AUTH_KEYCLOAK_ID ?? "");
   logout.searchParams.set("post_logout_redirect_uri", `${protocol}://${host}/login`);
   if (idToken) logout.searchParams.set("id_token_hint", idToken);
