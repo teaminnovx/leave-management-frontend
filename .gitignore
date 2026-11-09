@@ -42,3 +42,4 @@ next-env.d.ts
 
 # local data store and uploads
 /data/
+!.env.example

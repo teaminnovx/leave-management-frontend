@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
 import { read } from "@/lib/db";
 import { NAV } from "@/lib/nav";
-import { signOut } from "@/lib/session-actions";
+import { signOutEverywhere } from "@/lib/session-actions";
 import { ROLE_LABELS } from "@/lib/types";
 
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -30,9 +30,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <div className="md:mt-auto">
           <p className="font-semibold leading-snug">{user.name}</p>
           <p className="text-sm text-white/75">{ROLE_LABELS[user.role]}</p>
-          <form action={signOut} className="mt-2">
+          <form action={signOutEverywhere} className="mt-2">
             <button type="submit" className="text-sm underline underline-offset-4 hover:text-white/80">
-              Switch user
+              Sign out
             </button>
           </form>
         </div>

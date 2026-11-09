@@ -1,46 +1,36 @@
-import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { read } from "@/lib/db";
-import { signIn } from "@/lib/session-actions";
-import { ROLES, ROLE_LABELS } from "@/lib/types";
+import { auth } from "@/auth";
+import { signInWithKeycloak } from "@/lib/session-actions";
 
-async function PeoplePicker() {
-  await connection();
-  const users = read((db) => db.users);
+type SearchParams = Promise<{ callbackUrl?: string; error?: string }>;
+
+async function SignInForm({ searchParams }: { searchParams: SearchParams }) {
+  const { callbackUrl = "/", error } = await searchParams;
+  if ((await auth())?.user) redirect(callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/");
 
   return (
-    <div className="mt-10 grid gap-8 md:grid-cols-3">
-      {ROLES.map((role) => (
-        <section key={role}>
-          <h2 className="font-display text-lg font-semibold">{ROLE_LABELS[role]}</h2>
-          <ul className="mt-2 border-t border-line">
-            {users
-              .filter((user) => user.role === role)
-              .map((user) => (
-                <li key={user.id} className="border-b border-line">
-                  <form action={signIn}>
-                    <input type="hidden" name="userId" value={user.id} />
-                    <button type="submit" className="w-full px-2 py-3 text-left hover:bg-file/10">
-                      <span className="block font-semibold">{user.name}</span>
-                      <span className="block text-sm text-muted">{user.title}</span>
-                    </button>
-                  </form>
-                </li>
-              ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+    <form action={signInWithKeycloak} className="mt-10">
+      <input type="hidden" name="callbackUrl" value={callbackUrl} />
+      {error && (
+        <p role="alert" className="mb-4 max-w-prose text-red-700">
+          Sign-in did not complete. Please try again.
+        </p>
+      )}
+      <button type="submit" className="file-spine rounded px-5 py-3 font-semibold text-white hover:opacity-90">
+        Sign in with Keycloak
+      </button>
+    </form>
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-12 md:py-20">
       <h1 className="page-title">Leave Register</h1>
-      <p className="mt-2 max-w-prose text-muted">Choose who you are signing in as. Each role sees its own part of the process.</p>
-      <Suspense fallback={<p className="mt-10 text-muted">Loading people</p>}>
-        <PeoplePicker />
+      <p className="mt-2 max-w-prose text-muted">Sign in with your organisation account to open the register.</p>
+      <Suspense fallback={<p className="mt-10 text-muted">Checking your session</p>}>
+        <SignInForm searchParams={searchParams} />
       </Suspense>
     </main>
   );
